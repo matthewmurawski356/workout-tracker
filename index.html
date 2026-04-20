@@ -182,8 +182,9 @@
     .auth-input:focus{border-color:var(--green);}
     .auth-btn{width:100%;background:var(--green);border:none;border-radius:8px;color:#000;padding:12px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:4px;}
     .auth-btn:active{opacity:.8;}
-    .auth-toggle{text-align:center;margin-top:14px;font-size:12px;color:var(--dim2);}
-    .auth-toggle span{color:var(--green);cursor:pointer;text-decoration:underline;}
+    .auth-toggle{display:flex;gap:8px;margin-top:12px;}
+    .auth-toggle button{flex:1;background:none;border:1.5px solid var(--border);border-radius:8px;color:var(--dim2);font-size:12px;padding:9px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+    .auth-toggle button.active{border-color:var(--green);color:var(--green);background:#0f2a1a;font-weight:600;}
     .auth-msg{font-size:12px;margin-top:10px;text-align:center;min-height:18px;}
     .auth-msg.err{color:#f87171;} .auth-msg.ok{color:var(--green);}
 
@@ -204,7 +205,7 @@
     <input class="auth-input" id="auth-pass" type="password" placeholder="Password" autocomplete="current-password"/>
     <button class="auth-btn" id="auth-submit">Sign In</button>
     <div class="auth-msg" id="auth-msg"></div>
-    <div class="auth-toggle">No account? <span id="auth-switch">Create one</span></div>
+    <div class="auth-toggle"><button id="btn-signin" class="active">Sign In</button><button id="btn-signup">Create Account</button></div>
   </div>
 </div>
 
@@ -728,15 +729,12 @@ function updateAuthUI(){
   document.getElementById("auth-sub").textContent    = isSignUp
     ?"Create a free account to sync your workouts."
     :"Sign in to sync your data across devices.";
-  document.getElementById("auth-toggle").innerHTML = isSignUp
-    ?`Already have one? <span id="auth-switch">Sign in</span>`
-    :`No account? <span id="auth-switch">Create one</span>`;
+  document.getElementById("btn-signin").classList.toggle("active", !isSignUp);
+  document.getElementById("btn-signup").classList.toggle("active",  isSignUp);
   document.getElementById("auth-msg").textContent="";
 }
-// Event delegation so the listener survives innerHTML rewrites
-document.getElementById("auth-toggle").addEventListener("click",e=>{
-  if(e.target&&e.target.id==="auth-switch"){ isSignUp=!isSignUp; updateAuthUI(); }
-});
+document.getElementById("btn-signin").addEventListener("click",()=>{ isSignUp=false; updateAuthUI(); });
+document.getElementById("btn-signup").addEventListener("click",()=>{ isSignUp=true;  updateAuthUI(); });
 
 document.getElementById("auth-submit").addEventListener("click", async ()=>{
   const email=document.getElementById("auth-email").value.trim();
