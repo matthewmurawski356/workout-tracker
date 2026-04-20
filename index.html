@@ -1,570 +1,299 @@
-<!DOCTYPE html>
+<!<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Workout Tracker</title>
-  <meta name="description" content="Daily workout tracker" />
-  <meta name="theme-color" content="#0d0f12" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Workouts" />
-  <link rel="manifest" href="manifest.json" />
-  <!-- Apple touch icon inline via data URI -->
-  <link rel="apple-touch-icon" href="icon-192.png" />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
-
+  <meta name="description" content="Daily workout tracker"/>
+  <meta name="theme-color" content="#0d0f12"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Workouts"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #0d0f12;
-      --surface: #111318;
-      --surface2: #161b22;
-      --border: #1e2227;
-      --green: #4ade80;
-      --blue: #3b82f6;
-      --gold: #f5a623;
-      --white: #e8e8e4;
-      --dim: #555566;
-      --check-bg: #0a1a10;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bot: env(safe-area-inset-bottom, 0px);
+      --bg:#0d0f12; --s1:#111318; --s2:#161b22; --border:#1e2227;
+      --green:#4ade80; --blue:#3b82f6; --gold:#f5a623; --white:#e8e8e4;
+      --dim:#555566; --dim2:#888899;
+      --safe-top:env(safe-area-inset-top,0px);
+      --safe-bot:env(safe-area-inset-bottom,0px);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body {
-      background: var(--bg);
-      color: var(--white);
-      font-family: 'DM Sans', sans-serif;
-      min-height: 100vh;
-      overscroll-behavior: none;
-    }
-    body {
-      padding-top: var(--safe-top);
-      padding-bottom: calc(var(--safe-bot) + 16px);
-    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    html,body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;min-height:100vh;overscroll-behavior:none;}
+    body{padding-top:var(--safe-top);padding-bottom:calc(var(--safe-bot) + 58px);}
 
-    /* ---- HEADER ---- */
-    .header {
-      background: var(--surface2);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 20px 14px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    .header-top {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      margin-bottom: 4px;
-    }
-    .header h1 {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 32px;
-      letter-spacing: 3px;
-      color: var(--white);
-      line-height: 1;
-    }
-    .stats {
-      display: flex;
-      gap: 18px;
-    }
-    .stat { text-align: center; }
-    .stat-val {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 24px;
-      line-height: 1;
-    }
-    .stat-val.green { color: var(--green); }
-    .stat-val.gold  { color: var(--gold); }
-    .stat-lbl { font-size: 9px; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; }
+    /* ── HEADER ── */
+    .app-header{background:var(--s2);border-bottom:1px solid var(--border);padding:14px 18px 10px;position:sticky;top:0;z-index:30;}
+    .hdr-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:5px;}
+    .app-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;line-height:1;}
+    .hdr-stats{display:flex;gap:16px;}
+    .hstat{text-align:center;}
+    .hstat-val{font-family:'Bebas Neue',sans-serif;font-size:22px;line-height:1;}
+    .hstat-val.g{color:var(--green);} .hstat-val.o{color:var(--gold);}
+    .hstat-lbl{font-size:8px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;}
+    .sync-row{display:flex;align-items:center;gap:5px;}
+    .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--dim);transition:background .3s;}
+    .sync-dot.synced{background:var(--green);}
+    .sync-dot.syncing{background:var(--gold);animation:pulse 1s infinite;}
+    .sync-dot.error{background:#f87171;}
+    .sync-lbl{font-size:9px;color:var(--dim);letter-spacing:.5px;}
+    .signout-btn{background:none;border:1px solid var(--border);color:var(--dim);font-size:9px;padding:2px 7px;border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-left:auto;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-    /* ---- MONTH NAV ---- */
-    .month-nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 20px 8px;
-    }
-    .month-nav button {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--white);
-      width: 34px; height: 34px;
-      border-radius: 8px;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s;
-    }
-    .month-nav button:active { background: var(--surface2); }
-    .month-name {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 24px;
-      letter-spacing: 3px;
-    }
+    /* ── BOTTOM TABS ── */
+    .tab-bar{position:fixed;bottom:0;left:0;right:0;background:var(--s2);border-top:1px solid var(--border);display:flex;z-index:30;padding-bottom:var(--safe-bot);}
+    .tab{flex:1;padding:8px 4px 6px;text-align:center;cursor:pointer;color:var(--dim2);font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;transition:color .2s;display:flex;flex-direction:column;align-items:center;gap:2px;}
+    .tab.active{color:var(--green);}
+    .tab-icon{font-size:19px;line-height:1;}
 
-    /* ---- DAY HEADERS ---- */
-    .day-headers {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 3px;
-      padding: 0 12px 4px;
-    }
-    .day-hdr {
-      text-align: center;
-      font-size: 10px;
-      color: var(--dim);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+    /* ── SCREENS ── */
+    .screen{display:none;}
+    .screen.active{display:block;}
 
-    /* ---- CALENDAR GRID ---- */
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 3px;
-      padding: 0 12px;
-    }
-    .day-cell {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 4px 6px;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      min-height: 58px;
-      transition: all 0.15s;
-      position: relative;
-    }
-    .day-cell.today { border-color: var(--blue); background: #0f1e30; }
-    .day-cell.selected { border-color: var(--green); background: #0f2a1a; }
-    .day-cell.empty { background: none; border-color: transparent; cursor: default; }
-    .day-num {
-      font-size: 13px;
-      color: #ccc;
-      font-weight: 400;
-    }
-    .day-cell.today .day-num { color: var(--blue); font-weight: 700; }
-    .day-bar {
-      width: 28px; height: 4px;
-      border-radius: 2px;
-      background: transparent;
-      transition: background 0.2s;
-    }
-    .day-count { font-size: 10px; color: var(--dim); }
+    /* ══ CALENDAR ══ */
+    .month-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;}
+    .nav-btn{background:var(--s1);border:1px solid var(--border);color:var(--white);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .nav-btn:active{background:var(--s2);}
+    .month-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;}
+    .day-headers{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 12px 4px;}
+    .day-hdr{text-align:center;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;}
+    .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 12px;}
+    .day-cell{background:var(--s1);border:1.5px solid var(--border);border-radius:8px;padding:7px 3px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:54px;transition:all .15s;}
+    .day-cell.today{border-color:var(--blue);background:#0f1e30;}
+    .day-cell.selected{border-color:var(--green);background:#0f2a1a;}
+    .day-cell.empty{background:none;border-color:transparent;cursor:default;}
+    .day-num{font-size:12px;color:#ccc;}
+    .day-cell.today .day-num{color:var(--blue);font-weight:700;}
+    .day-bar{width:26px;height:4px;border-radius:2px;background:transparent;transition:background .2s;}
+    .day-count{font-size:9px;color:var(--dim);}
+    .legend{display:flex;gap:12px;justify-content:center;padding:8px 12px 0;}
+    .legend-item{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--dim);}
+    .legend-bar{width:18px;height:3px;border-radius:2px;}
+    .detail-panel{margin:12px 12px 0;background:var(--s1);border:1.5px solid var(--border);border-radius:14px;padding:14px 14px 18px;display:none;}
+    .detail-panel.open{display:block;}
+    .detail-date{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;color:var(--green);margin-bottom:12px;}
+    .workout-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+    .workout-btn{display:flex;align-items:center;gap:8px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px;cursor:pointer;color:var(--white);font-family:'DM Sans',sans-serif;transition:all .15s;text-align:left;}
+    .workout-btn.checked{background:#0f2a1a;border-color:var(--green);}
+    .workout-btn.checked-other{background:#1a1508;border-color:var(--gold);}
+    .w-icon{font-size:18px;flex-shrink:0;}
+    .w-label{font-size:12px;color:#888;flex:1;}
+    .workout-btn.checked .w-label{color:var(--green);font-weight:600;}
+    .workout-btn.checked-other .w-label{color:var(--gold);font-weight:600;}
+    .chk{width:16px;height:16px;border-radius:3px;border:1.5px solid #333;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;color:#000;transition:all .15s;}
+    .workout-btn.checked .chk{background:var(--green);border:none;}
+    .workout-btn.checked-other .chk{background:var(--gold);border:none;}
+    .custom-input{margin-top:8px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:#ccc;padding:8px 12px;font-size:12px;width:100%;outline:none;font-family:'DM Sans',sans-serif;}
+    .custom-input:focus{border-color:var(--gold);}
 
-    /* ---- DETAIL PANEL ---- */
-    .detail-panel {
-      margin: 14px 12px 0;
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 14px;
-      padding: 16px 16px 20px;
-      display: none;
-    }
-    .detail-panel.open { display: block; }
-    .detail-date {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 20px;
-      letter-spacing: 3px;
-      color: var(--green);
-      margin-bottom: 14px;
-    }
-    .workout-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    .workout-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      padding: 11px 12px;
-      cursor: pointer;
-      transition: all 0.15s;
-      text-align: left;
-      color: var(--white);
-      font-family: 'DM Sans', sans-serif;
-    }
-    .workout-btn.checked {
-      background: #0f2a1a;
-      border-color: var(--green);
-    }
-    .workout-btn.checked-other {
-      background: #1a1508;
-      border-color: var(--gold);
-    }
-    .workout-icon { font-size: 20px; flex-shrink: 0; }
-    .workout-label {
-      font-size: 13px;
-      color: #888;
-      font-weight: 400;
-      flex: 1;
-    }
-    .workout-btn.checked .workout-label { color: var(--green); font-weight: 600; }
-    .workout-btn.checked-other .workout-label { color: var(--gold); font-weight: 600; }
-    .check-box {
-      width: 18px; height: 18px;
-      border-radius: 4px;
-      border: 1.5px solid #333;
-      background: transparent;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      font-size: 11px;
-      font-weight: 700;
-      color: #000;
-      transition: all 0.15s;
-    }
-    .workout-btn.checked .check-box,
-    .workout-btn.checked-other .check-box {
-      border: none;
-    }
-    .workout-btn.checked .check-box { background: var(--green); }
-    .workout-btn.checked-other .check-box { background: var(--gold); }
+    /* ══ WEEKLY ══ */
+    .sec-header{padding:16px 16px 10px;}
+    .sec-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;}
+    .week-nav{display:flex;align-items:center;justify-content:space-between;padding:0 16px 14px;}
+    .week-label{font-size:12px;color:var(--dim2);font-weight:500;}
+    .ring-wrap{display:flex;flex-direction:column;align-items:center;padding:0 16px 16px;}
+    .ring-cont{position:relative;width:130px;height:130px;margin-bottom:8px;}
+    .ring-cont svg{transform:rotate(-90deg);}
+    .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    .ring-num{font-family:'Bebas Neue',sans-serif;font-size:42px;line-height:1;color:var(--green);}
+    .ring-sub{font-size:9px;color:var(--dim2);letter-spacing:1px;}
+    .ring-label{font-size:10px;color:var(--dim2);letter-spacing:1px;text-transform:uppercase;}
+    .week-dots{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:0 12px 16px;}
+    .wd-col{display:flex;flex-direction:column;align-items:center;gap:4px;}
+    .wd-name{font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;}
+    .wd-dot{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:var(--s1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--dim);}
+    .wd-dot.active{background:#0f2a1a;border-color:var(--green);color:var(--green);}
+    .wd-dot.today-d{border-color:var(--blue);}
+    .wd-sub{font-size:8px;color:var(--dim);}
+    .divider{height:1px;background:var(--border);margin:0 16px 16px;}
+    .mini-label{padding:0 16px 8px;font-size:9px;color:var(--dim2);letter-spacing:1.5px;text-transform:uppercase;}
+    .act-rows{padding:0 16px;display:flex;flex-direction:column;gap:7px;margin-bottom:16px;}
+    .act-row{display:flex;align-items:center;gap:8px;}
+    .act-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0;}
+    .act-name{font-size:12px;flex:1;}
+    .act-bar-wrap{width:90px;height:5px;background:var(--s2);border-radius:3px;flex-shrink:0;}
+    .act-bar{height:5px;border-radius:3px;background:var(--green);}
+    .act-ct{font-size:11px;color:var(--dim2);width:22px;text-align:right;}
+    .insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 16px 16px;}
+    .ins-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;}
+    .ins-lbl{font-size:8px;color:var(--dim2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
+    .ins-val{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;}
+    .ins-sub{font-size:10px;color:var(--dim2);margin-top:1px;}
 
-    .custom-input {
-      margin-top: 10px;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      color: #ccc;
-      padding: 9px 12px;
-      font-size: 13px;
-      width: 100%;
-      outline: none;
-      font-family: 'DM Sans', sans-serif;
-      transition: border-color 0.15s;
-    }
-    .custom-input:focus { border-color: var(--gold); }
+    /* ══ MONTHLY ══ */
+    .month-hero{margin:0 12px 14px;background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px;position:relative;overflow:hidden;}
+    .month-hero::before{content:'';position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(74,222,128,.07) 0%,transparent 70%);}
+    .hero-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+    .hero-month{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;color:var(--green);}
+    .hero-yr{font-size:10px;color:var(--dim2);margin-top:1px;}
+    .hero-grade{font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:1;color:var(--gold);}
+    .hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+    .hs-val{font-family:'Bebas Neue',sans-serif;font-size:24px;line-height:1;}
+    .hs-lbl{font-size:8px;color:var(--dim2);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+    .heatmap-wrap{padding:0 12px 14px;}
+    .heatmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+    .hm-hdr{text-align:center;font-size:7px;color:var(--dim);text-transform:uppercase;padding-bottom:3px;}
+    .hm-cell{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;background:var(--s1);color:transparent;border:1px solid var(--border);}
+    .hm-cell.empty{background:none;border-color:transparent;}
+    .hm-cell.lv1{background:#0f2a1a;border-color:#1a4a2a;color:#4ade8066;}
+    .hm-cell.lv2{background:#134020;border-color:#2a6040;color:#4ade80aa;}
+    .hm-cell.lv3{background:#1a5a2a;border-color:#3a7a3a;color:var(--green);}
+    .hm-cell.lv4{background:#22703a;border-color:var(--green);color:var(--green);font-weight:800;}
+    .hm-cell.today-hm{outline:1.5px solid var(--blue);outline-offset:1px;}
+    .bc-section{padding:0 16px;margin-bottom:14px;}
+    .bc-rows{display:flex;flex-direction:column;gap:9px;}
+    .bc-row{display:flex;align-items:center;gap:8px;}
+    .bc-icon{font-size:14px;width:20px;text-align:center;}
+    .bc-name{font-size:11px;width:104px;flex-shrink:0;}
+    .bc-bar-wrap{flex:1;height:7px;background:var(--s2);border-radius:4px;}
+    .bc-bar{height:7px;border-radius:4px;}
+    .bc-num{font-size:11px;color:var(--dim2);width:24px;text-align:right;}
+    .trend-section{padding:0 16px;margin-bottom:14px;}
+    .trend-bars{display:flex;align-items:flex-end;gap:5px;height:56px;}
+    .trend-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;}
+    .trend-bar{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(to top,#134020,var(--green));min-height:3px;}
+    .trend-bar.cur{background:linear-gradient(to top,#1a3a60,var(--blue));}
+    .trend-wk{font-size:8px;color:var(--dim);}
+    .trend-num{font-size:9px;color:var(--dim2);}
+    .sk-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:0 12px;margin-bottom:14px;}
+    .sk-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;}
+    .sk-num{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;}
+    .sk-num.g{color:var(--green);} .sk-num.o{color:var(--gold);} .sk-num.b{color:var(--blue);}
+    .sk-lbl{font-size:8px;color:var(--dim2);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+    .bd-section{padding:0 12px 16px;}
+    .bd-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;}
+    .bd-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+    .bd-lbl{font-size:8px;color:var(--dim2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px;}
+    .bd-date{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--gold);}
+    .bd-badge{background:#1a1508;border:1px solid var(--gold);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--gold);font-weight:700;}
+    .bd-acts{display:flex;flex-wrap:wrap;gap:5px;}
+    .bd-act{background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:11px;}
 
-    /* ---- LEGEND ---- */
-    .legend {
-      display: flex;
-      gap: 14px;
-      justify-content: center;
-      padding: 10px 12px 0;
-    }
-    .legend-item {
-      display: flex; align-items: center; gap: 5px;
-      font-size: 10px; color: var(--dim);
-    }
-    .legend-bar { width: 20px; height: 4px; border-radius: 2px; }
+    /* ── AUTH ── */
+    #auth-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:100;flex-direction:column;align-items:center;justify-content:center;padding:32px;}
+    #auth-screen.show{display:flex;}
+    .auth-box{width:100%;max-width:340px;background:var(--s1);border:1.5px solid var(--border);border-radius:16px;padding:28px 24px;}
+    .auth-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:var(--green);margin-bottom:6px;}
+    .auth-sub{font-size:12px;color:var(--dim2);margin-bottom:22px;line-height:1.5;}
+    .auth-input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--white);padding:11px 14px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:10px;transition:border-color .15s;}
+    .auth-input:focus{border-color:var(--green);}
+    .auth-btn{width:100%;background:var(--green);border:none;border-radius:8px;color:#000;padding:12px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:4px;}
+    .auth-btn:active{opacity:.8;}
+    .auth-toggle{text-align:center;margin-top:14px;font-size:12px;color:var(--dim2);}
+    .auth-toggle span{color:var(--green);cursor:pointer;text-decoration:underline;}
+    .auth-msg{font-size:12px;margin-top:10px;text-align:center;min-height:18px;}
+    .auth-msg.err{color:#f87171;} .auth-msg.ok{color:var(--green);}
 
-    /* Install banner */
-    #install-banner {
-      display: none;
-      margin: 12px 12px 0;
-      background: var(--surface2);
-      border: 1px solid var(--blue);
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 12px;
-      color: #ccc;
-      align-items: center;
-      gap: 10px;
-    }
-    #install-banner button {
-      background: var(--blue);
-      border: none;
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-    #install-banner .dismiss {
-      background: none;
-      border: none;
-      color: var(--dim);
-      font-size: 16px;
-      cursor: pointer;
-      padding: 0 4px;
-      margin-left: auto;
-    }
+    /* install banner */
+    #install-banner{display:none;margin:10px 12px 0;background:var(--s2);border:1px solid var(--blue);border-radius:10px;padding:10px 14px;font-size:12px;color:#ccc;align-items:center;gap:10px;}
+    #install-banner button{background:var(--blue);border:none;color:#fff;padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;white-space:nowrap;}
+    #install-banner .dismiss{background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer;padding:0 4px;margin-left:auto;}
   </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-top">
-    <h1>WORKOUT LOG</h1>
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-val gold" id="streak-val">0d</div>
-        <div class="stat-lbl">Streak</div>
-      </div>
-      <div class="stat">
-        <div class="stat-val green" id="month-val">0</div>
-        <div class="stat-lbl">This Month</div>
-      </div>
-    </div>
+<!-- ── AUTH ── -->
+<div id="auth-screen" class="show">
+  <div class="auth-box">
+    <div class="auth-title">WORKOUT LOG</div>
+    <div class="auth-sub" id="auth-sub">Sign in to sync your workouts across devices.</div>
+    <input class="auth-input" id="auth-email" type="email" placeholder="Email address" autocomplete="email"/>
+    <input class="auth-input" id="auth-pass" type="password" placeholder="Password" autocomplete="current-password"/>
+    <button class="auth-btn" id="auth-submit">Sign In</button>
+    <div class="auth-msg" id="auth-msg"></div>
+    <div class="auth-toggle">No account? <span id="auth-switch">Create one</span></div>
   </div>
 </div>
 
-<div id="install-banner">
-  <span>📲 Add to Home Screen for app experience</span>
-  <button id="install-btn">Install</button>
-  <button class="dismiss" id="dismiss-btn">✕</button>
-</div>
+<!-- ── APP ── -->
+<div id="app" style="display:none">
 
-<div class="month-nav">
-  <button id="prev-btn">‹</button>
-  <div class="month-name" id="month-name"></div>
-  <button id="next-btn">›</button>
-</div>
+  <!-- header -->
+  <div class="app-header">
+    <div class="hdr-row">
+      <div class="app-title">WORKOUT LOG</div>
+      <div class="hdr-stats">
+        <div class="hstat"><div class="hstat-val o" id="hdr-streak">0d</div><div class="hstat-lbl">Streak</div></div>
+        <div class="hstat"><div class="hstat-val g" id="hdr-month">0</div><div class="hstat-lbl">This Month</div></div>
+      </div>
+    </div>
+    <div class="sync-row">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span class="sync-lbl" id="sync-lbl">connecting...</span>
+      <button class="signout-btn" id="signout-btn">Sign Out</button>
+    </div>
+  </div>
 
-<div class="day-headers">
-  <div class="day-hdr">Sun</div>
-  <div class="day-hdr">Mon</div>
-  <div class="day-hdr">Tue</div>
-  <div class="day-hdr">Wed</div>
-  <div class="day-hdr">Thu</div>
-  <div class="day-hdr">Fri</div>
-  <div class="day-hdr">Sat</div>
-</div>
+  <div id="install-banner">
+    <span>📲 Add to Home Screen for app experience</span>
+    <button id="install-btn">Install</button>
+    <button class="dismiss" id="dismiss-btn">✕</button>
+  </div>
 
-<div class="calendar" id="calendar"></div>
+  <!-- ══ CALENDAR SCREEN ══ -->
+  <div class="screen active" id="screen-cal">
+    <div class="month-nav">
+      <button class="nav-btn" id="cal-prev">‹</button>
+      <div class="month-name" id="cal-month-name"></div>
+      <button class="nav-btn" id="cal-next">›</button>
+    </div>
+    <div class="day-headers">
+      <div class="day-hdr">Sun</div><div class="day-hdr">Mon</div><div class="day-hdr">Tue</div>
+      <div class="day-hdr">Wed</div><div class="day-hdr">Thu</div><div class="day-hdr">Fri</div>
+      <div class="day-hdr">Sat</div>
+    </div>
+    <div class="calendar" id="calendar"></div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-bar" style="background:#3b82f6"></div>1–2</div>
+      <div class="legend-item"><div class="legend-bar" style="background:#4ade80"></div>3–4</div>
+      <div class="legend-item"><div class="legend-bar" style="background:#f5a623"></div>5+</div>
+    </div>
+    <div class="detail-panel" id="detail-panel">
+      <div class="detail-date" id="detail-date"></div>
+      <div class="workout-grid" id="workout-grid"></div>
+      <input class="custom-input" id="custom-input" placeholder='Label for "Other" activity...'/>
+    </div>
+  </div>
 
-<div class="legend">
-  <div class="legend-item"><div class="legend-bar" style="background:#3b82f6"></div>1–2</div>
-  <div class="legend-item"><div class="legend-bar" style="background:#4ade80"></div>3–4</div>
-  <div class="legend-item"><div class="legend-bar" style="background:#f5a623"></div>5+</div>
-</div>
+  <!-- ══ WEEKLY SCREEN ══ -->
+  <div class="screen" id="screen-weekly">
+    <div class="sec-header"><div class="sec-title">WEEKLY RECAP</div></div>
+    <div class="week-nav">
+      <button class="nav-btn" id="wk-prev">‹</button>
+      <div class="week-label" id="wk-label"></div>
+      <button class="nav-btn" id="wk-next">›</button>
+    </div>
+    <div class="ring-wrap">
+      <div class="ring-cont">
+        <svg width="130" height="130" viewBox="0 0 130 130">
+          <circle cx="65" cy="65" r="54" fill="none" stroke="#1e2430" stroke-width="9"/>
+          <circle cx="65" cy="65" r="54" fill="none" stroke="#4ade80" stroke-width="9"
+            stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="339.3" id="ring-arc"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-num" id="ring-num">0</div>
+          <div class="ring-sub" id="ring-sub">/ 0 sessions</div>
+        </div>
+      </div>
+      <div class="ring-label">ACTIVE DAYS</div>
+    </div>
+    <div class="week-dots" id="week-dots"></div>
+    <div class="divider"></div>
+    <div class="mini-label">ACTIVITY BREAKDOWN</div>
+    <div class="act-rows" id="wk-acts"></div>
+    <div class="divider"></div>
+    <div class="insight-grid" id="wk-insights"></div>
+  </div>
 
-<div class="detail-panel" id="detail-panel">
-  <div class="detail-date" id="detail-date"></div>
-  <div class="workout-grid" id="workout-grid"></div>
-  <input class="custom-input" id="custom-input" placeholder='Label for "Other" activity...' />
-</div>
-
-<script>
-const WORKOUTS = [
-  { id: "jump",    label: "100 Jump Ropes",  icon: "🪢" },
-  { id: "push",    label: "50 Push Ups",     icon: "💪" },
-  { id: "run",     label: "Run / KB Walk",   icon: "🏃" },
-  { id: "bike",    label: "Bike",            icon: "🚴" },
-  { id: "peloton", label: "Peloton",         icon: "🎯" },
-  { id: "weights", label: "Weighted Workout",icon: "🏋️" },
-  { id: "custom",  label: "Other",           icon: "⚡" },
-];
-
-const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-const STORAGE_KEY = "workout-tracker-v1";
-
-let viewYear, viewMonth, selected = null, customLabel = "";
-
-function loadData() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
-  catch { return {}; }
-}
-function saveData(d) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch {}
-}
-
-let data = loadData();
-
-function dateKey(y, m, d) {
-  return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-}
-function getDaysInMonth(y, m) { return new Date(y, m+1, 0).getDate(); }
-function getFirstDay(y, m) { return new Date(y, m, 1).getDay(); }
-
-function getCount(y, m, d) {
-  const k = dateKey(y, m, d);
-  const dd = data[k] || {};
-  return Object.values(dd).filter(v => v === true || (typeof v === 'string' && v)).length;
-}
-
-function calcStreak() {
-  let streak = 0, d = new Date();
-  while (true) {
-    const k = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
-    const dd = data[k] || {};
-    if (Object.values(dd).some(v => v)) { streak++; d.setDate(d.getDate()-1); }
-    else break;
-  }
-  return streak;
-}
-
-function updateStats() {
-  const today = new Date();
-  const daysInMonth = getDaysInMonth(viewYear, viewMonth);
-  let total = 0;
-  for (let d = 1; d <= daysInMonth; d++) total += getCount(viewYear, viewMonth, d);
-  document.getElementById("streak-val").textContent = calcStreak() + "d";
-  document.getElementById("month-val").textContent = total;
-}
-
-function barColor(count) {
-  if (!count) return "transparent";
-  if (count >= 5) return "#f5a623";
-  if (count >= 3) return "#4ade80";
-  return "#3b82f6";
-}
-
-function renderCalendar() {
-  const today = new Date();
-  const cal = document.getElementById("calendar");
-  cal.innerHTML = "";
-  document.getElementById("month-name").textContent = `${MONTHS[viewMonth]} ${viewYear}`;
-
-  const firstDay = getFirstDay(viewYear, viewMonth);
-  const daysInMonth = getDaysInMonth(viewYear, viewMonth);
-
-  for (let i = 0; i < firstDay; i++) {
-    const empty = document.createElement("div");
-    empty.className = "day-cell empty";
-    cal.appendChild(empty);
-  }
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const isToday = d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
-    const isSel = selected && selected.d === d && selected.m === viewMonth && selected.y === viewYear;
-    const count = getCount(viewYear, viewMonth, d);
-
-    const cell = document.createElement("div");
-    cell.className = "day-cell" + (isToday ? " today" : "") + (isSel ? " selected" : "");
-
-    const num = document.createElement("div");
-    num.className = "day-num";
-    num.textContent = d;
-
-    const bar = document.createElement("div");
-    bar.className = "day-bar";
-    bar.style.background = barColor(count);
-
-    cell.appendChild(num);
-    cell.appendChild(bar);
-
-    if (count > 0) {
-      const cnt = document.createElement("div");
-      cnt.className = "day-count";
-      cnt.textContent = count;
-      cell.appendChild(cnt);
-    }
-
-    cell.addEventListener("click", () => {
-      if (isSel) { selected = null; }
-      else { selected = { y: viewYear, m: viewMonth, d }; }
-      renderCalendar();
-      renderDetail();
-    });
-
-    cal.appendChild(cell);
-  }
-
-  updateStats();
-}
-
-function renderDetail() {
-  const panel = document.getElementById("detail-panel");
-  const grid = document.getElementById("workout-grid");
-  const input = document.getElementById("custom-input");
-
-  if (!selected) { panel.classList.remove("open"); return; }
-
-  panel.classList.add("open");
-  const key = dateKey(selected.y, selected.m, selected.d);
-  const dayData = data[key] || {};
-
-  const dateStr = `${MONTHS[selected.m].toUpperCase()} ${selected.d}, ${selected.y}`;
-  document.getElementById("detail-date").textContent = dateStr;
-
-  input.value = customLabel;
-
-  grid.innerHTML = "";
-  WORKOUTS.forEach(w => {
-    const isCustom = w.id === "custom";
-    const checked = isCustom ? !!dayData.custom : !!dayData[w.id];
-    const label = isCustom && dayData.customLabel ? dayData.customLabel : w.label;
-
-    const btn = document.createElement("button");
-    btn.className = "workout-btn" + (checked ? (isCustom ? " checked-other" : " checked") : "");
-
-    btn.innerHTML = `
-      <span class="workout-icon">${w.icon}</span>
-      <span class="workout-label">${label}</span>
-      <div class="check-box">${checked ? "✓" : ""}</div>
-    `;
-
-    btn.addEventListener("click", () => {
-      const k = dateKey(selected.y, selected.m, selected.d);
-      const dd = { ...(data[k] || {}) };
-      if (isCustom) {
-        if (dd.custom) { delete dd.custom; delete dd.customLabel; }
-        else { dd.custom = true; dd.customLabel = input.value || "Other"; }
-      } else {
-        dd[w.id] = !dd[w.id];
-      }
-      data[k] = dd;
-      saveData(data);
-      renderCalendar();
-      renderDetail();
-    });
-
-    grid.appendChild(btn);
-  });
-
-  input.oninput = (e) => { customLabel = e.target.value; };
-}
-
-// Month nav
-document.getElementById("prev-btn").addEventListener("click", () => {
-  if (viewMonth === 0) { viewYear--; viewMonth = 11; }
-  else viewMonth--;
-  selected = null;
-  renderCalendar();
-  renderDetail();
-});
-document.getElementById("next-btn").addEventListener("click", () => {
-  if (viewMonth === 11) { viewYear++; viewMonth = 0; }
-  else viewMonth++;
-  selected = null;
-  renderCalendar();
-  renderDetail();
-});
-
-// Init
-const now = new Date();
-viewYear = now.getFullYear();
-viewMonth = now.getMonth();
-renderCalendar();
-renderDetail();
-
-// PWA install prompt
-let deferredPrompt;
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById("install-banner").style.display = "flex";
-});
-document.getElementById("install-btn").addEventListener("click", async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    document.getElementById("install-banner").style.display = "none";
-  }
-});
-document.getElementById("dismiss-btn").addEventListener("click", () => {
-  document.getElementById("install-banner").style.display = "none";
-});
-
-// Service Worker registration
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
-  });
-}
-</script>
-</body>
-</html>
+  <!-- ══ MONTHLY SCREEN ══ -->
+  <div class="screen" id="screen-monthly">
+    <div class="sec-header"><div class="sec-title">MONTHLY REPORT</div></div>
+    <div class="month-nav" style="padding-top:0">
+      <button class="nav-btn" id="mo-prev">‹</button>
+      <div class="month-name" id="mo-name"></div>
+      <button class="nav-btn" id="mo-next">›</button>
+    </div>
+    <div class="m
